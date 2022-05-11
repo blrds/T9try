@@ -19,6 +19,11 @@ namespace T9try.Models.T9.Base
             Index = pair.Index;
         }
 
+        public Pair() {
+            Popularity = 0;
+            Index = -1;
+        }
+
         public double Popularity { get; set; }
         public int Index { get; set; }
 

@@ -1,21 +1,31 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using T9try.Models.T9.Base;
 
 namespace T9try.Models.T9
 {
-    class Dictionary
+    class Dictionary:IDisposable
     {
         public List<Word> Words { get; private set; } = new List<Word>();
 
-        public Dictionary()
+        public Dictionary(bool recover=true)
         {
+            if (recover && File.Exists("backup.json")) {
+                string obj = File.ReadAllText("backup.json");
+                Words = JsonConvert.DeserializeObject<List<Word>>(obj);
+            }
         }
 
+        public Dictionary(string startUpFile) {
+            Study(startUpFile);
+        }
+
+        ~Dictionary(){
+            Dispose();
+        }
         /// <summary>
         /// предсказывает след слово
         /// </summary>
@@ -27,7 +37,8 @@ namespace T9try.Models.T9
             int count = Math.Min(prevWords.Length, Settings.Setting.NextWords);
             for (int level = 0; level < count; level++)
             {
-                var word = GetWord(prevWords[prevWords.Length - 1 - level]);
+                if (prevWords[prevWords.Length - 1 - level] == null) continue;
+                var word = GetWord(prevWords[prevWords.Length - 1 - level].ToLower());
                 if (word == null) continue;
 
                 foreach (var a in word.Next[level])
@@ -66,6 +77,7 @@ namespace T9try.Models.T9
         {
             foreach (var a in Settings.Setting.SymbolsToIgnore)
                 text = text.Replace(a, ' ');
+            text = text.ToLower();
             var lines = text.Split('.');
             foreach (var line in lines)
             {
@@ -73,13 +85,13 @@ namespace T9try.Models.T9
                 words = words.Where(x => x != " " && x != "").ToArray();
                 if (words.Length == 0) continue;
                 foreach (var a in words)
-                    AddNewWord(a);
+                    AddNewWord(a.ToLower());
                 string[] next = new string[Settings.Setting.NextWords];
 
                 for (int i = 0; i < Settings.Setting.NextWords; i++)
                 {
                     if (i + 1 >= words.Length) AddNext("", ref next);
-                    AddNext(words[i + 1], ref next);
+                    AddNext(words[i + 1].ToLower(), ref next);
 
                 }
 
@@ -89,6 +101,7 @@ namespace T9try.Models.T9
                     wordIndex = GetIndex(words[i]);
                     for (int j = 0; j < next.Length; j++)
                     {
+                        if (next[j] == "") continue;
                         Words[wordIndex].AddNext(j, GetIndex(next[j]));
                     }
 
@@ -99,7 +112,6 @@ namespace T9try.Models.T9
         }
         public static bool AddNext(string word, ref string[] next)
         {
-            if (word == "") return false;
             for (int i = 0; i < next.Length - 1; i++)
             {
                 next[i] = next[i + 1];
@@ -112,6 +124,16 @@ namespace T9try.Models.T9
             if (Words.Where(x => x.Construction == word).Any()) return false;
             Words.Add(new Word(word));
             return true;
+        }
+
+        public void Dispose()
+        {
+            using (StreamWriter file = File.CreateText("backup.json"))
+            {
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.Serialize(file, Words);
+            }
+            Console.WriteLine("\n\nend\n\n");
         }
     }
 }

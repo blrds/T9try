@@ -1,28 +1,68 @@
-﻿using System.Linq;
+﻿using Microsoft.Win32;
+using System;
+using System.Linq;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
+using T9try.Infrastructure.Commands;
 using T9try.Models.T9;
 using T9try.ViewModels.Base;
+
+
 
 namespace T9try.ViewModels
 {
     class MainWindowViewModel : ViewModel
     {
+        ~MainWindowViewModel() {
+            Dictionary.Dispose();
+        }
+        public ICommand FileCommand { get; }
+        private bool CanFileCommnadExecute(object p) => true;
+        private void OnFileCommandExecuted(object p)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "txt files (*.txt)|*.txt";
+            ofd.AddExtension = true;
+            ofd.RestoreDirectory = true;
+            if (ofd.ShowDialog() == true)
+            {
+                try
+                {
+                    Dictionary.Study(ofd.FileName, Rewrite);
+                }
+                catch (Exception e) { }
+            }
+        }
+
+        public ICommand StudyCommand { get; }
+        private bool CanStudyCommnadExecute(object p) {
+            try
+            {
+                return Text != "" && Text.Where(x => Char.IsLetterOrDigit(x)).Any();
+            }
+            catch (Exception e) {
+                return false;
+            }
+        }
+        private void OnStudyCommandExecuted(object p)
+        {
+            Dictionary.StudyNew(Text);
+            if (Clean) Text = "";
+        }
         Dictionary Dictionary = new Dictionary();
         public string Text { get; set; }
 
-        public string Suggestion1
-        {
-            get;
-            set;
-        }
+        public string Suggestion1 { get; set; }
         public string Suggestion2 { get; set; }
         public string Suggestion3 { get; set; }
+        public bool Rewrite { get; set; }
+        public bool Clean { get; set; }
+
+        
         public MainWindowViewModel()
         {
-            Dictionary.Study("text.txt");
-            Suggestion1 = "иврот";
+            FileCommand = new LambdaCommand(OnFileCommandExecuted, CanFileCommnadExecute);
+            StudyCommand = new LambdaCommand(OnStudyCommandExecuted, CanStudyCommnadExecute);
         }
 
         public void TextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -63,9 +103,9 @@ namespace T9try.ViewModels
             }
             else { }
         }
-        public void TextBlock_KeyUp(object sender, KeyEventArgs e)
+        public void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-
+            Dictionary.Dispose();
         }
     }
 }

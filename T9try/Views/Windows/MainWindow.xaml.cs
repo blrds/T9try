@@ -26,6 +26,7 @@ namespace T9try
             InitializeComponent();
             var a = (DataContext as MainWindowViewModel);
             Text.TextChanged += a.TextBox_TextChanged;
+            this.Closing += a.Window_Closing;
         }
 
         private void TextBlock_MouseUp(object sender, MouseButtonEventArgs e)
@@ -42,5 +43,7 @@ namespace T9try
             Text.Text += (sender as TextBlock).Text+" ";
             Text.CaretIndex = Text.Text.Length;
         }
+
+        
     }
 }
