@@ -43,7 +43,10 @@ namespace T9try
             Text.Text += (sender as TextBlock).Text+" ";
             Text.CaretIndex = Text.Text.Length;
         }
-
-        
+        private void TextBlock1_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            Text.Text += (sender as TextBlock).Text;
+            Text.CaretIndex = Text.Text.Length;
+        }
     }
 }

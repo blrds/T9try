@@ -55,6 +55,12 @@ namespace T9try.ViewModels
         public string Suggestion1 { get; set; }
         public string Suggestion2 { get; set; }
         public string Suggestion3 { get; set; }
+
+        public string CharSuggestion1 { get; set; }
+        public string CharSuggestion2 { get; set; }
+        public string CharSuggestion3 { get; set; }
+        public string CharSuggestion4 { get; set; }
+
         public bool Rewrite { get; set; }
         public bool Clean { get; set; }
 
@@ -101,7 +107,27 @@ namespace T9try.ViewModels
                 OnPropertyChanged("Suggestion3");
 
             }
-            else { }
+            else {
+                var sentences = Text.Split('.');
+                var words = sentences.Last().Split(' ');
+                var a=Dictionary.Letters.GetNextLetters(words.Last());
+                if (a.Count >= 1)
+                    CharSuggestion1 = a[0].Letter.ToString();
+                else CharSuggestion1 = "";
+                OnPropertyChanged("CharSuggestion1");
+                if (a.Count >= 2)
+                    CharSuggestion2 = a[1].Letter.ToString();
+                else CharSuggestion2 = "";
+                OnPropertyChanged("CharSuggestion2");
+                if (a.Count >= 3)
+                    CharSuggestion3 = a[2].Letter.ToString();
+                else CharSuggestion3 = "";
+                OnPropertyChanged("CharSuggestion3");
+                if (a.Count >= 4)
+                    CharSuggestion4 = a[3].Letter.ToString();
+                else CharSuggestion4 = "";
+                OnPropertyChanged("CharSuggestion4");
+            }
         }
         public void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {

@@ -10,12 +10,17 @@ namespace T9try.Models.T9
     class Dictionary:IDisposable
     {
         public List<Word> Words { get; private set; } = new List<Word>();
-
+        public Letters Letters { get; private set; } = new Letters();
         public Dictionary(bool recover=true)
         {
-            if (recover && File.Exists("backup.json")) {
-                string obj = File.ReadAllText("backup.json");
+            if (recover && File.Exists("backupWords.json")) {
+                string obj = File.ReadAllText("backupWords.json");
                 Words = JsonConvert.DeserializeObject<List<Word>>(obj);
+            }
+            if (recover && File.Exists("backupLetters.json"))
+            {
+                string obj = File.ReadAllText("backupLetters.json");
+                Letters = JsonConvert.DeserializeObject<Letters>(obj);
             }
         }
 
@@ -69,7 +74,11 @@ namespace T9try.Models.T9
 
         public void Study(string file, bool reset = true)
         {
-            if (reset) Words.Clear();
+            if (reset)
+            {
+                Words.Clear();
+                Letters.Chars.Clear();
+            }
             string text = File.ReadAllText(file);
             StudyNew(text);
         }
@@ -85,7 +94,10 @@ namespace T9try.Models.T9
                 words = words.Where(x => x != " " && x != "").ToArray();
                 if (words.Length == 0) continue;
                 foreach (var a in words)
+                {
                     AddNewWord(a.ToLower());
+                    Letters.LearnWord(a.ToLower());
+                }
                 string[] next = new string[Settings.Setting.NextWords];
 
                 for (int i = 0; i < Settings.Setting.NextWords; i++)
@@ -128,10 +140,15 @@ namespace T9try.Models.T9
 
         public void Dispose()
         {
-            using (StreamWriter file = File.CreateText("backup.json"))
+            using (StreamWriter file = File.CreateText("backupWords.json"))
             {
                 JsonSerializer serializer = new JsonSerializer();
                 serializer.Serialize(file, Words);
+            }
+            using (StreamWriter file = File.CreateText("backupLetters.json"))
+            {
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.Serialize(file, Letters);
             }
             Console.WriteLine("\n\nend\n\n");
         }
